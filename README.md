@@ -1,6 +1,6 @@
 # Edge App - Mosquitto MQTT Broker
 
-The **Edge App - Mosquitto MQTT Broker** for SecureEdge Pro provides a lightweight and reliable MQTT broker solution for secure and efficient message exchange between IoT devices. This application facilitates seamless communication between industrial devices and cloud platforms by acting as a central hub for message routing, enabling real-time data collection, remote monitoring, and control. It supports easy configuration, high scalability, and reliable messaging, making it an essential component for any IoT or industrial automation setup
+The **Edge App - Mosquitto MQTT Broker** for SecureEdge Pro provides a lightweight and reliable MQTT broker solution for secure and efficient message exchange between IoT devices. This application facilitates seamless communication between industrial devices and cloud platforms by acting as a central hub for message routing, enabling real-time data collection, remote monitoring, and control. It supports easy configuration, high scalability, and reliable messaging, making it an essential component for any IoT or industrial automation setup.
 
 ## Prerequisites
 
@@ -44,8 +44,9 @@ build_and_push_containers.cmd
 - Create a `mqtt-broker` container using the `mqtt-broker` image with the following port mappings:
 
   ```
-  Port Mapping: 1883:1883 (MQTT)
-  Port Mapping: 9001:9001 (WebSocket, optional)
+  Port Mapping: 8883:8883 (Secure MQTT over SSL/TLS)
+  Port Mapping: 1883:1883 (Plain MQTT)
+  Port Mapping: 9001:9001 (MQTT over WebSockets)
   ```
 
 - If enabling persistence, create a volume:
@@ -69,29 +70,67 @@ Refer to the screenshot for details:
 
 The broker uses a simple configuration file (`mosquitto.conf`) that you can modify to suit your needs.
 
-### Default Configuration (mosquitto.conf)
+### Port Differences Explained
 
-```ini
-# Allow anonymous connections (set to false to disable)
-allow_anonymous true
+- **Port 1883 (Plain MQTT)**:
 
-# Listener for MQTT (default port 1883)
-listener 1883
+  - Used for MQTT communication without encryption.
+  - Ideal for local network setups where security isn't a concern.
 
-# Enable WebSocket listener on port 9001 (optional, for MQTT over WebSockets)
-listener 9001
-protocol websockets
+- **Port 8883 (Secure MQTT over SSL/TLS)**:
 
-# Logging
-log_type all
-log_dest stdout
-```
+  - Provides encrypted communication using SSL/TLS.
+  - Suitable for scenarios where secure data exchange is required, especially over public networks.
+
+- **Port 9001 (MQTT over WebSockets)**:
+  - Enables MQTT communication over WebSockets.
+  - Commonly used for web-based MQTT clients or browser-based applications.
 
 ### Customization Options
 
 - **Persistence**: Enable persistent storage for MQTT messages.
 - **Authentication**: Use a username/password file for access control.
 - **TLS/SSL**: Secure the broker with SSL encryption (see the mosquitto.conf for options).
+
+## Certificate Generation
+
+To secure the broker with SSL/TLS, you need to generate certificates. Follow these steps:
+
+### Generate a Certificate Authority (CA)
+
+```bash
+openssl genrsa -out ca.key 4096
+
+openssl req -x509 -new -nodes -key ca.key -sha256 -days 3650 -out ca.crt \
+ -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=MyCA"
+```
+
+### Generate Server Certificate Signed by CA
+
+Ensure the subjectAltName includes the broker's IP (e.g., 192.168.140.1).
+
+```bash
+# Generate server private key
+openssl genrsa -out server.key 4096
+
+# Create server CSR with Subject Alternative Name (SAN)
+openssl req -new -key server.key -out server.csr \
+  -subj "/C=US/ST=State/L=City/O=Organization/OU=Unit/CN=192.168.140.1" \
+  -addext "subjectAltName=IP:192.168.140.1"
+
+# Sign server certificate with CA
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial \
+  -out server.crt -days 3650 -sha256 -extfile <(printf "subjectAltName=IP:192.168.140.1")
+```
+
+### Certificate Duration
+
+The `-days` parameter in the OpenSSL commands determines the duration (validity period) of the certificates. In the above examples, the certificates are valid for **3650 days** (approximately 10 years). This duration can be adjusted based on your requirements:
+
+- For shorter durations (e.g., 1 year): Replace `-days 3650` with `-days 365`.
+- For longer durations, ensure that the certificates align with your security policies and the expected lifecycle of your MQTT deployment.
+
+It is recommended to periodically review and renew certificates before they expire to maintain secure communication.
 
 ## Testing the Broker
 
