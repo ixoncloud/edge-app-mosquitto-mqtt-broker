@@ -2,13 +2,21 @@
 
 The **Edge App - Mosquitto MQTT Broker** for SecureEdge Pro provides a lightweight and reliable MQTT broker solution for secure and efficient message exchange between IoT devices. This application facilitates seamless communication between industrial devices and cloud platforms by acting as a central hub for message routing, enabling real-time data collection, remote monitoring, and control. It supports easy configuration, high scalability, and reliable messaging, making it an essential component for any IoT or industrial automation setup.
 
-## Prerequisites
+## Steps to Deploy Mosquitto MQTT Broker
+
+### Prerequisites
 
 Ensure your environment is properly set up by following this guide: [Running custom Docker applications on the SecureEdge Pro](https://support.ixon.cloud/hc/en-us/articles/14231117531420-Running-custom-Docker-applications-on-the-SecureEdge-Pro).
 
-## Steps to Deploy Mosquitto MQTT Broker
+### 1. Download and adjust to your SecureEdge Pro
 
-### 1. Build and Push the Docker Image
+Download the code of this project and change the IP address in the following files to the LAN IP address of your SecureEge Pro:
+
+- buildkitd-secure-edge-pro.toml
+- build_and_push_containers.sh
+- build_and_push_containers.cmd
+
+### 2. Build and Push the Docker Image
 
 To build the Mosquitto image from the Dockerfile, ensure you have the correct builder:
 
@@ -38,7 +46,7 @@ For Windows:
 build_and_push_containers.cmd
 ```
 
-### 2. Set Up the MQTT Broker Container on SecureEdge Pro
+### 3. Set Up the MQTT Broker Container on SecureEdge Pro
 
 - Access the local web interface of the SecureEdge Pro.
 - Create a `mqtt-broker` container using the `mqtt-broker` image with the following port mappings:
@@ -58,7 +66,7 @@ build_and_push_containers.cmd
 Refer to the screenshot for configuration details:  
 ![Create Container](secure_edge_pro_settings/create_container.png)
 
-### 3. Start the Container
+### 4. Start the Container
 
 - Wait for the container to be created.
 - Start the container.
